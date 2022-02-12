@@ -1,9 +1,6 @@
-const themes = {
-  DarkTheme,
-  LightTheme,
-}
-function getTheme(theme) {
-  return themes[theme]
+// const themes = (await axios.get('/theme/available_theme')).data
+async function getTheme(theme) {
+    return MaterialUI.createTheme((await axios.get(`%THEME_PATH%/get/${theme}`)).data)
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -24,21 +21,26 @@ FastReact.ThemeProvider = (props) => {
   const { children } = props
 
   // Read current theme from localStorage or maybe from an api
-  const currentTheme = localStorage.getItem('appTheme') || 'LightTheme'
+  const currentTheme = localStorage.getItem('appTheme') || 'Dark'
 
   // State to hold the selected theme name
-  const [themeName, _setThemeName] = React.useState(currentTheme)
+  const [Theme, _setTheme] = React.useState(MaterialUI.createTheme({}))
   const [windowTitle, _setWindowTitle] = React.useState('FastReact')
   const [appTitle, _setAppTitle] = React.useState('FastReact')
   const [drawerStatus, _setDrawer] = React.useState(false)
 
-  // Retrieve the theme object by theme name
-  const theme = getTheme(themeName)
+  React.useEffect(()=>{
+    getTheme(currentTheme).then(e=>{
+        _setTheme(e)
+      })
+  },[])
   document.title = windowTitle
   // Wrap _setThemeName to store new theme names in localStorage
   const setThemeName = (name) => {
     localStorage.setItem('appTheme', name)
-    _setThemeName(name)
+    getTheme(currentTheme).then(e=>{
+      _setTheme(e)
+    })
   }
   const setWindowTitle = (title) =>{
       document.title = title
@@ -48,7 +50,7 @@ FastReact.ThemeProvider = (props) => {
       _setAppTitle(title)
   }
   const contextValue = {
-    currentTheme: themeName,
+    currentTheme: Theme,
     setTheme: setThemeName,
     windowTitle: windowTitle,
     appTitle: appTitle,
@@ -60,7 +62,7 @@ FastReact.ThemeProvider = (props) => {
 
   return (
     <FastReact.ThemeContext.Provider value={contextValue}>
-      <MaterialUI.ThemeProvider theme={theme}>{children}</MaterialUI.ThemeProvider>
+      <MaterialUI.ThemeProvider theme={Theme}>{children}</MaterialUI.ThemeProvider>
     </FastReact.ThemeContext.Provider>
   )
 }

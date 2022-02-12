@@ -1,7 +1,7 @@
-from FastReact import APP
+from FastReact import FastReactAPP
 import uvicorn
 
-app = APP()
+app = FastReactAPP()
 # @app.on_event
 @app.component('Test-Component')
 def testComponent():

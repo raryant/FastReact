@@ -159,6 +159,7 @@ FastReact.Header = (props) =>{
         open={drawerStatus}
       >
         <DrawerHeader style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0}}>
+            <DrawerHeaderImage/>
             {/* <FastReactEngine.DrawerImage/> */}
             {/* <div id='drawerImage' style={{width: '100%', height: '100%', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center'}} alt="Header Logo" /> */}
         </DrawerHeader>
