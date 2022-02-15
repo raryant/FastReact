@@ -4,15 +4,19 @@ const Content = [
     menu: 'Home',
     desc: 'Home Menu',
     subMenu: [
-
+        {content: 'Dashboard', name: 'Dashboard', icon: <span className="material-icons">menu</span>, path: "/", level: [0,1,2,3]},
+        {content: 'Dashboard', name: 'DashboardX', icon: <span className="material-icons">menu</span>, path: "/test1", level: [0,1,2,3]},
+        {content: 'Dashboard', name: 'DashboardXX', icon: <span className="material-icons">menu</span>, path: "/test2", level: [0,1,2,3]},
       ],
     }
   ];
 function DrawerItems(){
     const { appTitle, setAppTitle } = React.useContext(FastReact.ThemeContext)
     const { getUserLevel } = React.useContext(FastReact.AuthContext)
+    const navigate = ReactRouterDOM.useNavigate()
     const updateSelected = (eLink, pageName) => {
-        // history.go(eLink);
+        // history.pushState({},'',eLink);
+        navigate(eLink)
         setAppTitle(pageName)
     }
     const classes = {}
@@ -23,7 +27,8 @@ function DrawerItems(){
           if(window.location.pathname === path){
             title = menu + ' > ' + name            
             if(!level.some((x)=>x===getUserLevel())){
-              history.push('/login')
+              // history.pushState({},'','/login')
+              navigate('/login')
             }
           }
         })
@@ -110,6 +115,21 @@ const DrawerHeader = MaterialUI.styled('div')(({ theme }) => ({
 FastReact.Header = (props) =>{
   const theme = MaterialUI.useTheme();
   const { appTitle, setAppTitle, drawerStatus, setDrawer} = React.useContext(FastReact.ThemeContext)
+  const [DrawerHeaderImageState, setDrawerHeaderImage] = React.useState('')
+  React.useEffect(()=>{
+    const HeaderImage = FastReact.LoadComponent('./assets/drawerHeader.js')
+    setDrawerHeaderImage(<HeaderImage/>)
+  },[])
+  const DrawerHeaderImage = () =>{
+    return DrawerHeaderImageState
+  }
+  // const DrawerHeaderImage = React.lazy(()=>import('/assets/drawerHeader.jss'))
+  // const DrawerHeaderImage = React.lazy(()=>import('/assets/drawerHeader.js').then(e=>console.log(e)))
+  // const DrawerHeaderImage = FastReact.LoadComponent('/assets/drawerHeader.js')
+  // const DrawerHeaderImage = React.lazy(()=>axios.get('/assets/drawerHeader.js').then(e=>{
+  //   const blobob = URL.createObjectURL(new Blob([Babel.transform(e.data, {presets: ['react']}).code],  {type : 'text/javascript'}));
+  //   return import(blobob)
+  // }).catch((e) => console.log('Error in importing', e)))
   const handleDrawerOpen = () => {
     setDrawer(true);
   };
@@ -159,9 +179,9 @@ FastReact.Header = (props) =>{
         open={drawerStatus}
       >
         <DrawerHeader style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0}}>
+            <React.Suspense fallback=''>
             <DrawerHeaderImage/>
-            {/* <FastReactEngine.DrawerImage/> */}
-            {/* <div id='drawerImage' style={{width: '100%', height: '100%', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center'}} alt="Header Logo" /> */}
+            </React.Suspense>
         </DrawerHeader>
         <MaterialUI.Divider />
         <DrawerItems/>        

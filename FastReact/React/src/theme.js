@@ -16,6 +16,7 @@ FastReact.ThemeContext = React.createContext(
     setDrawer: null,
   },
 )
+FastReact.AvailableTheme = []
 FastReact.ThemeProvider = (props) => {
   // eslint-disable-next-line react/prop-types
   const { children } = props
@@ -32,7 +33,10 @@ FastReact.ThemeProvider = (props) => {
   React.useEffect(()=>{
     getTheme(currentTheme).then(e=>{
         _setTheme(e)
-      })
+      })  
+    axios.get(`%THEME_PATH%/available_theme`).then(e=>{
+      FastReact.AvailableTheme = e.data
+    })
   },[])
   document.title = windowTitle
   // Wrap _setThemeName to store new theme names in localStorage
