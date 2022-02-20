@@ -1,24 +1,33 @@
 
-const Content = [
-    {
-    menu: 'Home',
-    desc: 'Home Menu',
-    subMenu: [
-        {content: 'Dashboard', name: 'Dashboard', icon: <span className="material-icons">menu</span>, path: "/", level: [0,1,2,3]},
-        {content: 'Dashboard', name: 'DashboardX', icon: <span className="material-icons">menu</span>, path: "/test1", level: [0,1,2,3]},
-        {content: 'Dashboard', name: 'DashboardXX', icon: <span className="material-icons">menu</span>, path: "/test2", level: [0,1,2,3]},
-      ],
-    }
-  ];
+// const Content = [
+//     {
+//     menu: 'Home',
+//     desc: 'Home Menu',
+//     subMenu: [
+//         {content: 'Dashboard', name: 'Dashboard', icon: <span className="material-icons">menu</span>, path: "/", level: [0,1,2,3]},
+//         {content: 'Dashboard', name: 'DashboardX', icon: <span className="material-icons">menu</span>, path: "/test1", level: [0,1,2,3]},
+//         {content: 'Dashboard', name: 'DashboardXX', icon: <span className="material-icons">menu</span>, path: "/test2", level: [0,1,2,3]},
+//       ],
+//     }
+//   ];
 function DrawerItems(){
     const { appTitle, setAppTitle } = React.useContext(FastReact.ThemeContext)
     const { getUserLevel } = React.useContext(FastReact.AuthContext)
     const navigate = ReactRouterDOM.useNavigate()
+    const location = ReactRouterDOM.useLocation()
+    const [Content, setContent] = React.useState([])
     const updateSelected = (eLink, pageName) => {
         // history.pushState({},'',eLink);
         navigate(eLink)
         setAppTitle(pageName)
     }
+    React.useEffect(()=>{
+      axios.get('/_components/drawer_content.json').then(ret=>{
+        if(ret.status === 200){
+          setContent(ret.data)
+        }
+      })
+    },[])
     const classes = {}
     React.useEffect(()=>{
       let title = appTitle
@@ -37,25 +46,30 @@ function DrawerItems(){
     })
     return(
     <MaterialUI.List>
-    {Content.map(({menu, desc, subMenu }) => (
+    {Content.map(({menu, desc, subMenu, icon, display_empty}) => (
       <React.Fragment key={menu}>
-        <div style={{display: !subMenu.some(({level})=>level.some((x)=>x===getUserLevel())) ? 'none' : ''}}>
+        <div style={{display: subMenu.some(({level})=>level.some((x)=>x===getUserLevel())) || display_empty ? '' : 'none'}}>
         <MaterialUI.Tooltip title={desc ? desc : menu} arrow placement="right">
         <MaterialUI.ListItem className={classes.categoryHeader}>
+        <div style={{width: '24px', height: '24px', marginRight: '1em', marginLeft: '-0.3em'}}><span className="material-icons">{icon}</span></div>
           <MaterialUI.ListItemText>
             {menu}
           </MaterialUI.ListItemText>
         </MaterialUI.ListItem>
         </MaterialUI.Tooltip>
         {subMenu.map(({ name: subMenuName, icon, path, level, desc: childDesc}) => (
+            <div style={{display: subMenu.some(({level})=>level.some((x)=>x===getUserLevel())) ? '' : 'none'}} key={subMenuName}>
             <MaterialUI.Tooltip title={childDesc ? childDesc : subMenuName} arrow placement="right" key={subMenuName}>
             <MaterialUI.MenuItem button="true" style={{display: !level.some((level)=>level===getUserLevel()) ? 'None': ''}} selected={window.location.pathname === path} key={subMenuName} onClick={() => updateSelected(path, menu + " > " + subMenuName)}>
-                <div style={{width: '24px', height: '24px', marginRight: '1em', marginLeft: '-0.3em'}}>{icon}</div>
+                <div style={{marginLeft: '1em', display: 'flex'}}>
+                <div style={{width: '24px', height: '24px', marginRight: '1em', marginLeft: '-0.3em'}}><span className="material-icons">{icon}</span></div>
                 <MaterialUI.ListItemText>
                     {subMenuName}
                 </MaterialUI.ListItemText>
+                </div>
             </MaterialUI.MenuItem>
             </MaterialUI.Tooltip>
+          </div>
         ))}
       <MaterialUI.Divider/>
       </div>
@@ -117,19 +131,13 @@ FastReact.Header = (props) =>{
   const { appTitle, setAppTitle, drawerStatus, setDrawer} = React.useContext(FastReact.ThemeContext)
   const [DrawerHeaderImageState, setDrawerHeaderImage] = React.useState('')
   React.useEffect(()=>{
-    const HeaderImage = FastReact.LoadComponent('./assets/drawerHeader.js')
+    // const HeaderImage = FastReact.LoadComponent('%ASSETS_PATH%/drawerHeader.js')
+    const HeaderImage = FastReact.LoadComponent('%DRAWER_HEADER_ENDPOINT%')
     setDrawerHeaderImage(<HeaderImage/>)
   },[])
   const DrawerHeaderImage = () =>{
     return DrawerHeaderImageState
   }
-  // const DrawerHeaderImage = React.lazy(()=>import('/assets/drawerHeader.jss'))
-  // const DrawerHeaderImage = React.lazy(()=>import('/assets/drawerHeader.js').then(e=>console.log(e)))
-  // const DrawerHeaderImage = FastReact.LoadComponent('/assets/drawerHeader.js')
-  // const DrawerHeaderImage = React.lazy(()=>axios.get('/assets/drawerHeader.js').then(e=>{
-  //   const blobob = URL.createObjectURL(new Blob([Babel.transform(e.data, {presets: ['react']}).code],  {type : 'text/javascript'}));
-  //   return import(blobob)
-  // }).catch((e) => console.log('Error in importing', e)))
   const handleDrawerOpen = () => {
     setDrawer(true);
   };

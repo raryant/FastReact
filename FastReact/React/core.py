@@ -10,10 +10,11 @@ import logging
 class UIRouter(APIRouter):
     favicon_path = os.path.join(os.path.dirname(__file__), 'default', 'favicon.ico')
     drawer_header_image_path = os.path.join(os.path.dirname(__file__), 'default', 'drawerHeader.jpg')
-    drawer_header_endpoint = "drawerHeaderImage"
-    def __init__(self, path: str = '', theme_path: str = '', asset_path: str = 'assets', *args, **kwargs):
+    drawer_header_endpoint = ""
+    def __init__(self, path: str = '', theme_path: str = '', asset_path: str = 'assets', drawer_header_endpoint: str = None,*args, **kwargs):
         self.__theme_path__ = theme_path
         self.__assets_path__ = asset_path
+        self.drawer_header_endpoint = drawer_header_endpoint if isinstance(drawer_header_endpoint, str) else f'/{self.__assets_path__}/drawer_header.js'
         super().__init__(prefix=path, *args, **kwargs)
         self.logger = logging.getLogger('uvicorn')
         @self.get(f'/{self.__assets_path__}/apps.js', include_in_schema=False)
@@ -30,6 +31,8 @@ class UIRouter(APIRouter):
             content.append(read_file(os.path.join(self.get_src_directory(), 'renderer.js')))
             javascript =  "".join(await asyncio.gather(*content))
             javascript = javascript.replace('%THEME_PATH%', self.__theme_path__)
+            javascript = javascript.replace('%ASSETS_PATH%', f'/{self.__assets_path__}')
+            javascript = javascript.replace('%DRAWER_HEADER_ENDPOINT%', self.drawer_header_endpoint)
             return Response(javascript, media_type="text/javascript")
             return rjsmin.jsmin(javascript)
         @self.get('/', include_in_schema=False, response_class=HTMLResponse)
@@ -46,31 +49,18 @@ class UIRouter(APIRouter):
             resp.media_type = "image/vnd.microsoft.icon"
             return FileResponse(path=self.get_favicon_path())
 
-        @self.get(f'/{self.__assets_path__}/{self.drawer_header_endpoint}', include_in_schema=False)
+        @self.get(f'/{self.__assets_path__}/HeaderLogo.png', include_in_schema=False)
         def drawerImage(resp: Response):
             resp.headers['cache-control'] = "public, s-maxage=600, max-age=60"
             return FileResponse(path=self.get_drawer_header_image_path(), media_type='image/png')
             
-        @self.get(f'/{self.__assets_path__}/drawerHeader.js', include_in_schema=False)
+        @self.get(self.drawer_header_endpoint, include_in_schema=False)
         def drawerHeader(resp: Response):
             resp.headers['cache-control'] = "public, s-maxage=600, max-age=60"
             resp.media_type = "application/javascript"
-            # ret = 'const DrawerHeader = () => {return(<div id="drawerImage" style={{width: "100%", height: "100%", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundmage: url("/'+self.__assets_path__+'/drawerHeaderImage")}} alt="Header Logo" />)}'
-            # ret = "function DrawerHeader(){ <div id='drawerImage' style={{width: '100%', height: '100%', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' ,backgroundImage: 'url('+MavixRLogo+')'}} alt='Header Logo' />}"
-            ret = "const DrawerHeaderImage = () =>{ return (<div id='drawerImage' style={{width: '100%', height: '100%', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' ,backgroundImage: 'url(\""+self.__assets_path__+"/"+self.drawer_header_endpoint+"\")'}} alt='Header Logo' />)};export default DrawerHeaderImage"
+            ret = "const DrawerHeaderImage = () =>{ return (<div id='drawerImage' style={{width: '100%', height: '100%', backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' ,backgroundImage: 'url(\""+self.__assets_path__+"/HeaderLogo.png\")'}} alt='Header Logo' />)};export default DrawerHeaderImage"
             # ret = rjsmin.jsmin(ret)
             return PlainTextResponse(content=ret, media_type="text/javascript")
-
-        @self.get(f'/{self.__assets_path__}/importir.js', include_in_schema=False, response_class=PlainTextResponse)
-        def importirJS(resp: Response):
-            resp.headers['cache-control'] = "public, s-maxage=600, max-age=60"
-            resp.media_type = "application/javascript"
-            # ret = "window.Importir = (filename) => import(filename)"
-            ret = """
-export default async (url, module = {exports:{}}) =>
-(Function('module', 'exports', await (await fetch(url)).text()).call(module, module, module.exports), module).exports
-            """
-            return Response(content=ret, media_type="text/javascript")
         self.index_handler = index
         self.apps_js_handler = js
         self.drawer_image_header_handler = drawerHeader
